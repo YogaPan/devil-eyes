@@ -97,6 +97,7 @@ func (f *Fetcher) Start() {
 		if seq, ok := dat["seq"]; ok {
 			f.seq = int(seq.(float64))
 		}
+		log(dat)
 
 		// Sleep 5 seconds to prevent facebook block.
 		time.Sleep(5 * time.Second)
