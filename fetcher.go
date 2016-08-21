@@ -121,54 +121,61 @@ func log(dat map[string]interface{}) {
 	// "ms" might means "messenger status" or "web status".
 	if ms, ok := dat["ms"]; ok {
 		for _, event := range ms.([]interface{}) {
-			// Get all user information.
-			if event.(map[string]interface{})["type"] == "chatproxy-presence" {
-				targets := event.(map[string]interface{})["buddyList"]
+			logInit(event.(map[string]interface{}))
+			logUpdate(event.(map[string]interface{}))
+		}
+	}
+}
 
-				for uid, act := range targets.(map[string]interface{}) {
-					// la means "last active time", is UNIX timestamp.
-					la := int64(act.(map[string]interface{})["lat"].(float64))
-					t := time.Now().Unix()
+func logInit(event map[string]interface{}) {
+	// Get all user information.
+	if event["type"].(string) == "chatproxy-presence" {
+		targets := event["buddyList"]
 
-					// status have two value
-					// 0 means "offline".
-					// 2 means "online"
-					if status, ok := act.(map[string]interface{})["p"].(float64); ok {
-						if status == 0 {
-							fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-						} else if status == 2 {
-							fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-						} else {
-							fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-						}
-					} else {
-						fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-					}
+		for uid, act := range targets.(map[string]interface{}) {
+			// la means "last active time", is UNIX timestamp.
+			la := int64(act.(map[string]interface{})["lat"].(float64))
+			t := time.Now().Unix()
+
+			// status have two value
+			// 0 means "offline".
+			// 2 means "online"
+			if status, ok := act.(map[string]interface{})["p"].(float64); ok {
+				if status == 0 {
+					fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+				} else if status == 2 {
+					fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+				} else {
+					fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 				}
+			} else {
+				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
 			}
+		}
+	}
+}
 
-			// Update user information.
-			if event.(map[string]interface{})["type"] == "buddylist_overlay" {
-				targets := event.(map[string]interface{})["overlay"]
+func logUpdate(event map[string]interface{}) {
+	// Update user information.
+	if event["type"].(string) == "buddylist_overlay" {
+		targets := event["overlay"]
 
-				for uid, act := range targets.(map[string]interface{}) {
-					// la means "last active time", is UNIX timestamp.
-					la := int64(act.(map[string]interface{})["la"].(float64))
-					t := time.Now().Unix()
+		for uid, act := range targets.(map[string]interface{}) {
+			// la means "last active time", is UNIX timestamp.
+			la := int64(act.(map[string]interface{})["la"].(float64))
+			t := time.Now().Unix()
 
-					// status have two value
-					// 0 means "offline".
-					// 2 means "online"
-					status := act.(map[string]interface{})["a"].(float64)
+			// status have two value
+			// 0 means "offline".
+			// 2 means "online"
+			status := act.(map[string]interface{})["a"].(float64)
 
-					if status == 0 {
-						fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-					} else if status == 2 {
-						fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-					} else {
-						fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-					}
-				}
+			if status == 0 {
+				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+			} else if status == 2 {
+				fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+			} else {
+				fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 			}
 		}
 	}
