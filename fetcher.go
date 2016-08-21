@@ -72,13 +72,13 @@ func (f *Fetcher) makeRequest() map[string]interface{} {
 	f.setParams(req)
 
 	// Show request string with query.
-	fmt.Println(req.URL.String())
+	// fmt.Println(req.URL.String())
 
 	res, _ := http.DefaultClient.Do(req)
 	defer res.Body.Close()
 
 	// Print response status code.
-	fmt.Println(res.Status)
+	// fmt.Println(res.Status)
 
 	body, _ := ioutil.ReadAll(res.Body)
 
@@ -98,63 +98,6 @@ func (f *Fetcher) Start() {
 			f.seq = int(seq.(float64))
 		}
 
-		// This is the online/offline info we're looking for.
-		// "ms" is an array, include a lot of online/offline events.
-		// "ms" might means "messenger status" or "web status".
-		if ms, ok := dat["ms"]; ok {
-			for _, event := range ms.([]interface{}) {
-				// Get all user information.
-				if event.(map[string]interface{})["type"] == "chatproxy-presence" {
-					targets := event.(map[string]interface{})["buddyList"]
-
-					for uid, act := range targets.(map[string]interface{}) {
-						// la means "last active time", is UNIX timestamp.
-						la := int64(act.(map[string]interface{})["lat"].(float64))
-						t := time.Now().Unix()
-
-						// status have two value
-						// 0 means "offline".
-						// 2 means "online"
-						if status, ok := act.(map[string]interface{})["p"].(float64); ok {
-							if status == 0 {
-								fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-							} else if status == 2 {
-								fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-							} else {
-								fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-							}
-						} else {
-							fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-						}
-					}
-				}
-
-				// Update user information.
-				if event.(map[string]interface{})["type"] == "buddylist_overlay" {
-					targets := event.(map[string]interface{})["overlay"]
-
-					for uid, act := range targets.(map[string]interface{}) {
-						// la means "last active time", is UNIX timestamp.
-						la := int64(act.(map[string]interface{})["la"].(float64))
-						t := time.Now().Unix()
-
-						// status have two value
-						// 0 means "offline".
-						// 2 means "online"
-						status := act.(map[string]interface{})["a"].(float64)
-
-						if status == 0 {
-							fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-						} else if status == 2 {
-							fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-						} else {
-							fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-						}
-					}
-				}
-			}
-		}
-
 		// Sleep 5 seconds to prevent facebook block.
 		time.Sleep(5 * time.Second)
 	}
@@ -171,6 +114,65 @@ func byteToJson(byt []byte) map[string]interface{} {
 	return dat
 }
 
+func log(dat map[string]interface{}) {
+	// This is the online/offline info we're looking for.
+	// "ms" is an array, include a lot of online/offline events.
+	// "ms" might means "messenger status" or "web status".
+	if ms, ok := dat["ms"]; ok {
+		for _, event := range ms.([]interface{}) {
+			// Get all user information.
+			if event.(map[string]interface{})["type"] == "chatproxy-presence" {
+				targets := event.(map[string]interface{})["buddyList"]
+
+				for uid, act := range targets.(map[string]interface{}) {
+					// la means "last active time", is UNIX timestamp.
+					la := int64(act.(map[string]interface{})["lat"].(float64))
+					t := time.Now().Unix()
+
+					// status have two value
+					// 0 means "offline".
+					// 2 means "online"
+					if status, ok := act.(map[string]interface{})["p"].(float64); ok {
+						if status == 0 {
+							fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+						} else if status == 2 {
+							fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+						} else {
+							fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
+						}
+					} else {
+						fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+					}
+				}
+			}
+
+			// Update user information.
+			if event.(map[string]interface{})["type"] == "buddylist_overlay" {
+				targets := event.(map[string]interface{})["overlay"]
+
+				for uid, act := range targets.(map[string]interface{}) {
+					// la means "last active time", is UNIX timestamp.
+					la := int64(act.(map[string]interface{})["la"].(float64))
+					t := time.Now().Unix()
+
+					// status have two value
+					// 0 means "offline".
+					// 2 means "online"
+					status := act.(map[string]interface{})["a"].(float64)
+
+					if status == 0 {
+						fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+					} else if status == 2 {
+						fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+					} else {
+						fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
+					}
+				}
+			}
+		}
+	}
+}
+
 func main() {
 	byt, err := ioutil.ReadFile("./secret.json")
 	if err != nil {
@@ -181,8 +183,6 @@ func main() {
 	if err := json.Unmarshal(byt, &secret); err != nil {
 		panic(err)
 	}
-
-	fmt.Println(secret)
 
 	f := Fetcher{
 		secret: secret,
