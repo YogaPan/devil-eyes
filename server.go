@@ -14,5 +14,9 @@ func main() {
 		ctx.Render("index.html", struct{}{})
 	})
 
+	iris.Get("/app", func(ctx *iris.Context) {
+		ctx.Render("app.html", struct{}{})
+	})
+
 	iris.Listen(":8080")
 }

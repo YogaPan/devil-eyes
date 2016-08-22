@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <title>Demon Eyese</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.css">
+    <style>
+      #chart svg {
+        height: 400px;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="public/css/app.css">
+  </head>
+
+  <body>
+    <div class="nav">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/app">App</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+    <div class="info">
+      <h1>Your Friend Activity</h1>
+    </div>
+    <div id="chart">
+      <svg></svg>
+    </div>
+
+    <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.min.js"></script>
+
+    <script type="text/javascript">
+      const sin = [];
+      const cos = [];
+      for (let i = 0; i < 100; i++) {
+        sin.push({ x: i, y: Math.sin(i / 10) })
+        cos.push({ x: i, y: 0.5 * Math.cos(i / 10) })
+      }
+      // This is fake data.
+      // Real data need husky implement backend api.
+      const data = [
+        {
+          values: sin,
+          key: '彭彥緯',
+          color: '#ff7f0e'
+        },
+        {
+          values: cos,
+          key: '哈士奇',
+          color: '#2ca02c'
+        }
+      ];
+      nv.addGraph(() => {
+        const chart = nv.models.lineChart()
+          .useInteractiveGuideline(true);
+        chart.xAxis
+          .axisLabel('Time (hrs)')
+          .tickFormat(d3.format(',r'));
+        chart.yAxis
+          .axisLabel('active (a)')
+          .tickFormat(d3.format('.02f'));
+        d3.select('#chart svg')
+          .datum(data)
+          .transition().duration(500)
+          .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+      });
+    </script>
+  </body>
+  </html>

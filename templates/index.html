@@ -1,11 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Test</title>
-  <meta charset="utf-8">
-  <link rel="stylesheet" type="text/css" href="/public/css/main.css">
+  <meta charset="UTF-8">
+  <title>Demon Eyes</title>
+  <link rel="stylesheet" href="public/css/main.css">
 </head>
 <body>
-  <p>Hi</p>
+  <div class="nav">
+    <ul>
+      <li><a style="text-decoration: none" href="/">Demon Eyes</a></li>
+      <li><a style="text-decoration: none" href="/about">About us</a></li>
+    </ul>
+  </div>
+
+  <div class="big-eye">
+    <h1>Sell Your Soul to DEMON</h1>
+  </div>
+
+  <div class="container">
+    <form action="/app" method="GET" >
+
+      <div class="single">
+        <h1>UID</h1>
+        <input type="text" name="uid" id="uid" placeholder="enter your uid">
+      </div>
+
+      <div class="single">
+        <h1>Client ID</h1>
+        <input type="text" name="client_id" id="client_id" placeholder="Client ID">
+      </div>
+
+      <div class="single">
+        <h1>Cookie to Demon!!</h1>
+        <input type="text" name="cookie" id="cookie" placeholder="Your Cookie">
+      </div>
+
+      <div class="new-line">
+        <button type="submit">Sell your soul to DEMON!</button>
+      </div>
+    </form>
+  </div>
+  <script type="text/javascript">
+    const uid = document.getElementById('uid');
+    const client_id = document.getElementById('client_id');
+    const cookie = document.getElementById('cookie');
+    uid.onfocus = function() {
+      this.placeholder = '';
+    }
+    uid.onblur = function() {
+      this.placeholder = 'enter your uid';
+    }
+    client_id.onfocus = function() {
+      this.placeholder = '';
+    }
+    client_id.onblur = function() {
+      this.placeholder = 'client_id';
+    }
+    cookie.onfocus = function() {
+      this.placeholder = '';
+    }
+    cookie.onblur = function() {
+      this.placeholder = 'Your Cookie';
+    }
+  </script>
 </body>
 </html>

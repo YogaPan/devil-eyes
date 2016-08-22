@@ -1,3 +1,131 @@
+body {
+  font-family: "Arial", Sans-Serif;
+  font-weight: 100;
+  background-color: #232323;
+}
+
+body, div
+h1, h2, h3, h4, h5, h6, p, a,
+ul, ol, li, img, input, button {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #ddd;
+}
+
 p {
-  color: red;
+  color: #ddd;
+}
+
+a {
+  text-decoration: none;
+  color: #ddd;
+}
+
+input {
+  width: 250px;
+  height: 50px;
+  padding: 10px 10px;
+  margin-top: 10px;
+  font-size: 25px;
+  border-radius: 10px;
+  transition-duration: .3s;
+}
+
+input:focus {
+  outline: none;
+  border: 2px solid red;
+}
+
+button {
+  border: none;
+  border-radius: 5px;
+  background-color: #1497fc;
+  font-size: 25px;
+  padding: 20px 20px;
+  margin-top: 30px;
+  cursor: pointer;
+  color: white;
+  transition-duration: .5s;
+}
+
+button:hover {
+  background-color: red;
+}
+
+.nav {
+  height: 90px;
+}
+
+.nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #232323;
+}
+
+.nav ul li {
+  float: left;
+  padding: 30px 25px;
+  text-align: center;
+  transition-duration: .5s;
+}
+
+.nav ul li:hover {
+  background-color: #111;
+} 
+
+.nav ul li a {
+  color: #ccc;
+  font-size: 35px;
+  font-weight: 100;
+}
+
+.nav ul li a:hover {
+  color: #fff;
+}
+
+.big-eye {
+  clear: both;
+  height: 400px;
+  width: 100%;
+  background-color: #111;
+  text-align: center;
+  line-height: 400px;
+}
+
+.big-eye h1 {
+  color: #fff;
+  font-size: 50px;
+  vertical-align: middle;
+  margin: 0;
+}
+
+.container {
+  margin: 20px auto;
+  padding: 20px;
+  text-align: center;
+  background-color: #232323;
+  transition-duration: .7s;
+}
+
+.container h1 {
+  margin-top: 20px;
+}
+
+.single {
+  padding: 10px;
+  display: inline-block;
+  width: 400px;
+  background-color: #232323;
+}
+
+.new-line {
+  margin-top: 30px;
+  width: 100%;
+  text-align: center;
 }
