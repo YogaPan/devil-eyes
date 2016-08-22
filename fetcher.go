@@ -21,6 +21,8 @@ type secret struct {
 	Cookie    string `json:"cookie"`
 }
 
+// Your MySQL username, password and dbname.
+// Write your mysql data to db.json.
 type dbSettings struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -29,19 +31,21 @@ type dbSettings struct {
 
 type User struct {
 	gorm.Model
-	Uid               string `gorm:"type:varchar(100);unique_index"`
-	FriendOfflineTime []OfflineTime
-	FriendOnlineTime  []OnlineTime
-}
-
-type OfflineTime struct {
-	gorm.Model
-	OfflineTime time.Time
+	Uid         string `gorm:"type:varchar(100);unique_index"`
+	OfflineTime []OfflineTime
+	OnlineTime  []OnlineTime
 }
 
 type OnlineTime struct {
 	gorm.Model
-	OnlineTime time.Time
+	UserID int `gorm:"index"`
+	Time   int64
+}
+
+type OfflineTime struct {
+	gorm.Model
+	UserID int `gorm:"index"`
+	Time   int64
 }
 
 // A facebook secret data fetcher.
@@ -141,7 +145,7 @@ func (f *Fetcher) initDB() {
 	fmt.Printf("Connect String is: %s", connectString)
 
 	f.db, err = gorm.Open("mysql", connectString)
-	if err != nil 
+	if err != nil {
 		panic("failed to connect database")
 	}
 
@@ -159,41 +163,21 @@ func (f *Fetcher) initSecret() {
 	}
 }
 
-// This fetcher make requests every 5 seconds.
-func (f *Fetcher) Start() {
-	f.init()
-
-	for true {
-		dat := f.makeRequest()
-
-		// Update out seq number.
-		if seq, ok := dat["seq"]; ok {
-			f.seq = int(seq.(float64))
-		}
-		log(dat)
-
-		// Sleep 5 seconds to prevent facebook block.
-		time.Sleep(5 * time.Second)
-	}
-
-	f.db.Close()
-}
-
 // Print online/offline information.
-func log(dat map[string]interface{}) {
+func (f *Fetcher) log(dat map[string]interface{}) {
 	// This is the online/offline info we're looking for.
 	// "ms" is an array, include a lot of online/offline events.
 	// "ms" might means "messenger status" or "web status".
 	if ms, ok := dat["ms"]; ok {
 		for _, event := range ms.([]interface{}) {
-			logInit(event.(map[string]interface{}))
-			logUpdate(event.(map[string]interface{}))
+			f.logInit(event.(map[string]interface{}))
+			f.logUpdate(event.(map[string]interface{}))
 		}
 	}
 }
 
 // Get all friends online/offline time.
-func logInit(event map[string]interface{}) {
+func (f *Fetcher) logInit(event map[string]interface{}) {
 	if event["type"].(string) == "chatproxy-presence" {
 		targets := event["buddyList"]
 
@@ -208,27 +192,23 @@ func logInit(event map[string]interface{}) {
 			if status, ok := act.(map[string]interface{})["p"].(float64); ok {
 				if status == 0 {
 					fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+					f.saveOfflineTime(uid, t)
 				} else if status == 2 {
 					fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+					f.saveOnlineTime(uid, t)
 				} else {
 					fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 				}
 			} else {
 				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+				f.saveOfflineTime(uid, t)
 			}
 		}
 	}
-
-	// var users []User
-	// db.Where("uid = ?", "ABC").Find(&users)
-	// if len(users) == 0 {
-	// 	db.Create(&User{Uid: "ABC"})
-	// 	fmt.Println("SAVE!!")
-	// }
 }
 
 // Update friends online/offline time.
-func logUpdate(event map[string]interface{}) {
+func (f *Fetcher) logUpdate(event map[string]interface{}) {
 	if event["type"].(string) == "buddylist_overlay" {
 		targets := event["overlay"]
 
@@ -244,13 +224,45 @@ func logUpdate(event map[string]interface{}) {
 
 			if status == 0 {
 				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
+				f.saveOfflineTime(uid, t)
 			} else if status == 2 {
 				fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
+				f.saveOnlineTime(uid, t)
 			} else {
 				fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 			}
 		}
 	}
+}
+
+func (f *Fetcher) saveOnlineTime(uid string, t int64) {
+	var user User
+
+	// Save user.
+	// If user exists, this will not execute.
+	f.db.Where("uid = ?", uid).First(&user)
+	if user.ID == 0 {
+		user = User{Uid: uid}
+		f.db.Create(&user)
+		fmt.Println("Create new user!!")
+	}
+
+	f.db.Model(&user).Association("OnlineTime").Append(OnlineTime{Time: t})
+}
+
+func (f *Fetcher) saveOfflineTime(uid string, t int64) {
+	var user User
+
+	// Save user.
+	// If user exists, this will not execute.
+	f.db.Where("uid = ?", uid).First(&user)
+	if user.ID == 0 {
+		user = User{Uid: uid}
+		f.db.Create(&user)
+		fmt.Println("Create new user!!")
+	}
+
+	f.db.Model(&user).Association("OfflineTime").Append(OfflineTime{Time: t})
 }
 
 // Turn byte into JSON format map.
@@ -262,6 +274,26 @@ func byteToJson(byt []byte) map[string]interface{} {
 	}
 
 	return dat
+}
+
+// This fetcher make requests every 5 seconds.
+func (f *Fetcher) Start() {
+	f.init()
+
+	for true {
+		dat := f.makeRequest()
+
+		// Update out seq number.
+		if seq, ok := dat["seq"]; ok {
+			f.seq = int(seq.(float64))
+		}
+		f.log(dat)
+
+		// Sleep 5 seconds to prevent facebook block.
+		time.Sleep(5 * time.Second)
+	}
+
+	f.db.Close()
 }
 
 func main() {
