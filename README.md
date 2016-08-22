@@ -9,6 +9,15 @@ In secret.json file
 }
 ```
 
+In db.json file
+```json
+{
+    "username": "your name",
+    "password": "your password",
+    "dbname": "database name"
+}
+```
+
 # Start
 
 ```sh
