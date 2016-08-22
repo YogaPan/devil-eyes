@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -32,22 +31,14 @@ type dbSettings struct {
 // Your facebook friends.
 type User struct {
 	gorm.Model
-	Uid           string `gorm:"type:varchar(100);unique_index"`
-	OfflineEvents []OfflineEvent
-	OnlineEvents  []OnlineEvent
+	Uid        string `gorm:"type:varchar(100);unique_index"`
+	Activities []Activity
 }
 
-// Your firends online time.
-type OnlineEvent struct {
+// Your firends activity time.
+type Activity struct {
 	gorm.Model
 	UserID uint `gorm:"index"`
-	Time   int64
-}
-
-// Your firends offline time.
-type OfflineEvent struct {
-	gorm.Model
-	UserID int `gorm:"index"`
 	Time   int64
 }
 
@@ -154,7 +145,7 @@ func (f *Fetcher) initDB() {
 		panic("failed to connect database")
 	}
 
-	f.db.AutoMigrate(&User{}, &OnlineEvent{}, &OfflineEvent{})
+	f.db.AutoMigrate(&User{}, &Activity{})
 }
 
 // Read facebook secret data from ./secret.json.
@@ -176,14 +167,14 @@ func (f *Fetcher) log(dat map[string]interface{}) {
 	// "ms" might means "messenger status" or "web status".
 	if ms, ok := dat["ms"]; ok {
 		for _, event := range ms.([]interface{}) {
-			f.logInit(event.(map[string]interface{}))
+			f.logAll(event.(map[string]interface{}))
 			f.logUpdate(event.(map[string]interface{}))
 		}
 	}
 }
 
 // Get all friends online/offline time.
-func (f *Fetcher) logInit(event map[string]interface{}) {
+func (f *Fetcher) logAll(event map[string]interface{}) {
 	if event["type"].(string) == "chatproxy-presence" {
 		targets := event["buddyList"]
 
@@ -192,23 +183,8 @@ func (f *Fetcher) logInit(event map[string]interface{}) {
 			la := int64(act.(map[string]interface{})["lat"].(float64))
 			t := time.Now().Unix()
 
-			// status have two value
-			// 0 means "offline".
-			// 2 means "online"
-			if status, ok := act.(map[string]interface{})["p"].(float64); ok {
-				if status == 0 {
-					fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-					f.saveOfflineTime(uid, la)
-				} else if status == 2 {
-					fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-					f.saveOnlineTime(uid, la)
-				} else {
-					fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-				}
-			} else {
-				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-				f.saveOfflineTime(uid, la)
-			}
+			fmt.Printf("%d seconds ago %s Activate.\n", t-la, uid)
+			f.saveActivity(uid, la)
 		}
 	}
 }
@@ -223,28 +199,16 @@ func (f *Fetcher) logUpdate(event map[string]interface{}) {
 			la := int64(act.(map[string]interface{})["la"].(float64))
 			t := time.Now().Unix()
 
-			// status have two value
-			// 0 means "offline".
-			// 2 means "online"
-			status := act.(map[string]interface{})["a"].(float64)
-
-			if status == 0 {
-				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-				f.saveOfflineTime(uid, la)
-			} else if status == 2 {
-				fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-				f.saveOnlineTime(uid, la)
-			} else {
-				fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
-			}
+			fmt.Printf("%d seconds ago %s Activate.\n", t-la, uid)
+			f.saveActivity(uid, la)
 		}
 	}
 }
 
-// Save user and online time to MySQL.
-func (f *Fetcher) saveOnlineTime(uid string, t int64) {
+// Save user and activity time to MySQL.
+func (f *Fetcher) saveActivity(uid string, t int64) {
 	var user User
-	var event OnlineEvent
+	var activity Activity
 
 	f.db.Where("uid = ?", uid).First(&user)
 	if user.ID == 0 {
@@ -254,29 +218,9 @@ func (f *Fetcher) saveOnlineTime(uid string, t int64) {
 	}
 
 	// Save event if events not exists.
-	f.db.Where("time = ?", t).First(&event)
-	if event.ID == 0 {
-		f.db.Model(&user).Association("OnlineTimes").Append(OnlineEvent{Time: t})
-	}
-}
-
-// Save user and offline time to MySQL.
-func (f *Fetcher) saveOfflineTime(uid string, t int64) {
-	var user User
-	var event OfflineEvent
-
-	// Save user if user not exists.
-	f.db.Where("uid = ?", uid).First(&user)
-	if user.ID == 0 {
-		user = User{Uid: uid}
-		f.db.Create(&user)
-		fmt.Println("Create new user!!")
-	}
-
-	// Save event if events not exists.
-	f.db.Where("time = ?", t).First(&event)
-	if event.ID == 0 {
-		f.db.Model(&user).Association("OfflineEvents").Append(OfflineEvent{Time: t})
+	f.db.Where("time = ?", t).First(&activity)
+	if activity.ID == 0 {
+		f.db.Model(&user).Association("Activities").Append(Activity{Time: t})
 	}
 }
 

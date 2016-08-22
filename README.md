@@ -18,8 +18,15 @@ In db.json file
 }
 ```
 
-# Start
+# Start fetch user data
 
 ```sh
 $ go run fetcher.go
+```
+
+
+# Start your server
+
+```sh
+$ go run server.go
 ```

@@ -21,22 +21,14 @@ type dbSettings struct {
 // Your facebook friends.
 type User struct {
 	gorm.Model
-	Uid           string `gorm:"type:varchar(100);unique_index"`
-	OfflineEvents []OfflineEvent
-	OnlineEvents  []OnlineEvent
+	Uid        string `gorm:"type:varchar(100);unique_index"`
+	Activities []Activity
 }
 
-// Your firends online time.
-type OnlineEvent struct {
+// Your firends activity time.
+type Activity struct {
 	gorm.Model
 	UserID uint `gorm:"index"`
-	Time   int64
-}
-
-// Your firends offline time.
-type OfflineEvent struct {
-	gorm.Model
-	UserID int `gorm:"index"`
 	Time   int64
 }
 
@@ -72,24 +64,17 @@ func main() {
 	for {
 		var uid int
 		var user User
-		var onlineEvents []OnlineEvent
-		var offlineEvents []OfflineEvent
+		var activities []Activity
 
 		fmt.Println("Which user you want to see?")
 		fmt.Scanf("%d", &uid)
 
 		db.Where("uid = ?", uid).First(&user)
-		db.Model(&user).Related(&onlineEvents)
-		db.Model(&user).Related(&offlineEvents)
+		db.Model(&user).Related(&activities)
 
-		for _, event := range onlineEvents {
-			tm := time.Unix(event.Time, 0)
+		for _, activity := range activities {
+			tm := time.Unix(activity.Time, 0)
 			fmt.Println("online: ", tm)
-		}
-
-		for _, event := range offlineEvents {
-			tm := time.Unix(event.Time, 0)
-			fmt.Println("offline: ", tm)
 		}
 	}
 
