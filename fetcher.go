@@ -32,20 +32,20 @@ type dbSettings struct {
 // Your facebook friends.
 type User struct {
 	gorm.Model
-	Uid         string `gorm:"type:varchar(100);unique_index"`
-	OfflineTime []OfflineTime
-	OnlineTime  []OnlineTime
+	Uid           string `gorm:"type:varchar(100);unique_index"`
+	OfflineEvents []OfflineEvent
+	OnlineEvents  []OnlineEvent
 }
 
 // Your firends online time.
-type OnlineTime struct {
+type OnlineEvent struct {
 	gorm.Model
-	UserID int `gorm:"index"`
+	UserID uint `gorm:"index"`
 	Time   int64
 }
 
 // Your firends offline time.
-type OfflineTime struct {
+type OfflineEvent struct {
 	gorm.Model
 	UserID int `gorm:"index"`
 	Time   int64
@@ -147,14 +147,14 @@ func (f *Fetcher) initDB() {
 		dbSettings.Username, dbSettings.Password, dbSettings.Dbname)
 
 	fmt.Println("Connect To MySQL...")
-	fmt.Printf("Connect String is: %s", connectString)
+	fmt.Printf("Connect String is: %s\n", connectString)
 
 	f.db, err = gorm.Open("mysql", connectString)
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	f.db.AutoMigrate(&User{}, &OnlineTime{}, &OfflineTime{})
+	f.db.AutoMigrate(&User{}, &OnlineEvent{}, &OfflineEvent{})
 }
 
 // Read facebook secret data from ./secret.json.
@@ -198,16 +198,16 @@ func (f *Fetcher) logInit(event map[string]interface{}) {
 			if status, ok := act.(map[string]interface{})["p"].(float64); ok {
 				if status == 0 {
 					fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-					f.saveOfflineTime(uid, t)
+					f.saveOfflineTime(uid, la)
 				} else if status == 2 {
 					fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-					f.saveOnlineTime(uid, t)
+					f.saveOnlineTime(uid, la)
 				} else {
 					fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 				}
 			} else {
 				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-				f.saveOfflineTime(uid, t)
+				f.saveOfflineTime(uid, la)
 			}
 		}
 	}
@@ -230,10 +230,10 @@ func (f *Fetcher) logUpdate(event map[string]interface{}) {
 
 			if status == 0 {
 				fmt.Printf("%d seconds ago %s OFFLINE.\n", t-la, uid)
-				f.saveOfflineTime(uid, t)
+				f.saveOfflineTime(uid, la)
 			} else if status == 2 {
 				fmt.Printf("%d seconds ago %s ONLINE.\n", t-la, uid)
-				f.saveOnlineTime(uid, t)
+				f.saveOnlineTime(uid, la)
 			} else {
 				fmt.Fprintln(os.Stderr, "FATAL ERROR!!!!")
 			}
@@ -244,9 +244,8 @@ func (f *Fetcher) logUpdate(event map[string]interface{}) {
 // Save user and online time to MySQL.
 func (f *Fetcher) saveOnlineTime(uid string, t int64) {
 	var user User
+	var event OnlineEvent
 
-	// Save user.
-	// If user exists, this will not execute.
 	f.db.Where("uid = ?", uid).First(&user)
 	if user.ID == 0 {
 		user = User{Uid: uid}
@@ -254,15 +253,19 @@ func (f *Fetcher) saveOnlineTime(uid string, t int64) {
 		fmt.Println("Create new user!!")
 	}
 
-	f.db.Model(&user).Association("OnlineTime").Append(OnlineTime{Time: t})
+	// Save event if events not exists.
+	f.db.Where("time = ?", t).First(&event)
+	if event.ID == 0 {
+		f.db.Model(&user).Association("OnlineTimes").Append(OnlineEvent{Time: t})
+	}
 }
 
 // Save user and offline time to MySQL.
 func (f *Fetcher) saveOfflineTime(uid string, t int64) {
 	var user User
+	var event OfflineEvent
 
-	// Save user.
-	// If user exists, this will not execute.
+	// Save user if user not exists.
 	f.db.Where("uid = ?", uid).First(&user)
 	if user.ID == 0 {
 		user = User{Uid: uid}
@@ -270,7 +273,11 @@ func (f *Fetcher) saveOfflineTime(uid string, t int64) {
 		fmt.Println("Create new user!!")
 	}
 
-	f.db.Model(&user).Association("OfflineTime").Append(OfflineTime{Time: t})
+	// Save event if events not exists.
+	f.db.Where("time = ?", t).First(&event)
+	if event.ID == 0 {
+		f.db.Model(&user).Association("OfflineEvents").Append(OfflineEvent{Time: t})
+	}
 }
 
 // Turn byte into JSON format map.
@@ -288,7 +295,7 @@ func byteToJson(byt []byte) map[string]interface{} {
 func (f *Fetcher) Start() {
 	f.init()
 
-	for true {
+	for {
 		dat := f.makeRequest()
 
 		// Update out seq number.

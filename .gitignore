@@ -1,4 +1,5 @@
 secret.json
 db.json
+watch_list.json
 *.swp
 *.log
