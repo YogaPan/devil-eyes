@@ -29,6 +29,7 @@ type dbSettings struct {
 	Dbname   string `json:"dbname"`
 }
 
+// Your facebook friends.
 type User struct {
 	gorm.Model
 	Uid         string `gorm:"type:varchar(100);unique_index"`
@@ -36,12 +37,14 @@ type User struct {
 	OnlineTime  []OnlineTime
 }
 
+// Your firends online time.
 type OnlineTime struct {
 	gorm.Model
 	UserID int `gorm:"index"`
 	Time   int64
 }
 
+// Your firends offline time.
 type OfflineTime struct {
 	gorm.Model
 	UserID int `gorm:"index"`
@@ -119,11 +122,13 @@ func (f *Fetcher) makeRequest() map[string]interface{} {
 	return bodyJson
 }
 
+// Intialize fetcher facebook and database settings.
 func (f *Fetcher) init() {
 	f.initDB()
 	f.initSecret()
 }
 
+// Read settings from ./db.json file add Connect to MySQL databases.
 func (f *Fetcher) initDB() {
 	var err error
 	var byt []byte
@@ -152,6 +157,7 @@ func (f *Fetcher) initDB() {
 	f.db.AutoMigrate(&User{}, &OnlineTime{}, &OfflineTime{})
 }
 
+// Read facebook secret data from ./secret.json.
 func (f *Fetcher) initSecret() {
 	byt, err := ioutil.ReadFile("./secret.json")
 	if err != nil {
@@ -235,6 +241,7 @@ func (f *Fetcher) logUpdate(event map[string]interface{}) {
 	}
 }
 
+// Save user and online time to MySQL.
 func (f *Fetcher) saveOnlineTime(uid string, t int64) {
 	var user User
 
@@ -250,6 +257,7 @@ func (f *Fetcher) saveOnlineTime(uid string, t int64) {
 	f.db.Model(&user).Association("OnlineTime").Append(OnlineTime{Time: t})
 }
 
+// Save user and offline time to MySQL.
 func (f *Fetcher) saveOfflineTime(uid string, t int64) {
 	var user User
 
