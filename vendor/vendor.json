@@ -147,6 +147,18 @@
 			"revisionTime": "2016-07-25T09:52:14Z"
 		},
 		{
+			"checksumSHA1": "BZBFm5gN+gFqCSF4QZSPeh6CEmM=",
+			"path": "github.com/jinzhu/gorm",
+			"revision": "35a2a004d880453f0bbd3716bcc63da1cb15b77b",
+			"revisionTime": "2016-08-15T13:28:07Z"
+		},
+		{
+			"checksumSHA1": "ZtoqVjpOE8VF9n6Ebqyu4vTUYas=",
+			"path": "github.com/jinzhu/inflection",
+			"revision": "74387dc39a75e970e7a3ae6a3386b5bd2e5c5cff",
+			"revisionTime": "2016-08-17T01:46:01Z"
+		},
+		{
 			"checksumSHA1": "g+afVQQVopBLiLB5pFZp/8s6aBs=",
 			"path": "github.com/kardianos/osext",
 			"revision": "c2c54e542fb797ad986b31721e1baedf214ca413",

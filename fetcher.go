@@ -8,6 +8,9 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 // Your facebook uid, client_id and cookie.
@@ -18,10 +21,34 @@ type secret struct {
 	Cookie    string `json:"cookie"`
 }
 
+type dbSettings struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Dbname   string `json:"dbname"`
+}
+
+type User struct {
+	gorm.Model
+	Uid               string `gorm:"type:varchar(100);unique_index"`
+	FriendOfflineTime []OfflineTime
+	FriendOnlineTime  []OnlineTime
+}
+
+type OfflineTime struct {
+	gorm.Model
+	OfflineTime time.Time
+}
+
+type OnlineTime struct {
+	gorm.Model
+	OnlineTime time.Time
+}
+
 // A facebook secret data fetcher.
 // Make request every 5 seconds.
 type Fetcher struct {
 	secret
+	db  *gorm.DB
 	seq int
 }
 
@@ -88,8 +115,54 @@ func (f *Fetcher) makeRequest() map[string]interface{} {
 	return bodyJson
 }
 
+func (f *Fetcher) init() {
+	f.initDB()
+	f.initSecret()
+}
+
+func (f *Fetcher) initDB() {
+	var err error
+	var byt []byte
+	var dbSettings dbSettings
+
+	byt, err = ioutil.ReadFile("./db.json")
+	if err != nil {
+		panic(err)
+	}
+
+	if err = json.Unmarshal(byt, &dbSettings); err != nil {
+		panic(err)
+	}
+
+	connectString := fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local",
+		dbSettings.Username, dbSettings.Password, dbSettings.Dbname)
+
+	fmt.Println("Connect To MySQL...")
+	fmt.Printf("Connect String is: %s", connectString)
+
+	f.db, err = gorm.Open("mysql", connectString)
+	if err != nil 
+		panic("failed to connect database")
+	}
+
+	f.db.AutoMigrate(&User{}, &OnlineTime{}, &OfflineTime{})
+}
+
+func (f *Fetcher) initSecret() {
+	byt, err := ioutil.ReadFile("./secret.json")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := json.Unmarshal(byt, &f.secret); err != nil {
+		panic(err)
+	}
+}
+
 // This fetcher make requests every 5 seconds.
 func (f *Fetcher) Start() {
+	f.init()
+
 	for true {
 		dat := f.makeRequest()
 
@@ -102,19 +175,11 @@ func (f *Fetcher) Start() {
 		// Sleep 5 seconds to prevent facebook block.
 		time.Sleep(5 * time.Second)
 	}
+
+	f.db.Close()
 }
 
-// Turn btye into JSON format map.
-func byteToJson(byt []byte) map[string]interface{} {
-	var dat map[string]interface{}
-
-	if err := json.Unmarshal(byt, &dat); err != nil {
-		panic(err)
-	}
-
-	return dat
-}
-
+// Print online/offline information.
 func log(dat map[string]interface{}) {
 	// This is the online/offline info we're looking for.
 	// "ms" is an array, include a lot of online/offline events.
@@ -127,8 +192,8 @@ func log(dat map[string]interface{}) {
 	}
 }
 
+// Get all friends online/offline time.
 func logInit(event map[string]interface{}) {
-	// Get all user information.
 	if event["type"].(string) == "chatproxy-presence" {
 		targets := event["buddyList"]
 
@@ -153,10 +218,17 @@ func logInit(event map[string]interface{}) {
 			}
 		}
 	}
+
+	// var users []User
+	// db.Where("uid = ?", "ABC").Find(&users)
+	// if len(users) == 0 {
+	// 	db.Create(&User{Uid: "ABC"})
+	// 	fmt.Println("SAVE!!")
+	// }
 }
 
+// Update friends online/offline time.
 func logUpdate(event map[string]interface{}) {
-	// Update user information.
 	if event["type"].(string) == "buddylist_overlay" {
 		targets := event["overlay"]
 
@@ -181,21 +253,18 @@ func logUpdate(event map[string]interface{}) {
 	}
 }
 
+// Turn byte into JSON format map.
+func byteToJson(byt []byte) map[string]interface{} {
+	var dat map[string]interface{}
+
+	if err := json.Unmarshal(byt, &dat); err != nil {
+		panic(err)
+	}
+
+	return dat
+}
+
 func main() {
-	byt, err := ioutil.ReadFile("./secret.json")
-	if err != nil {
-		panic(err)
-	}
-
-	secret := secret{}
-	if err := json.Unmarshal(byt, &secret); err != nil {
-		panic(err)
-	}
-
-	f := Fetcher{
-		secret: secret,
-		seq:    0,
-	}
-
+	f := Fetcher{}
 	f.Start()
 }
