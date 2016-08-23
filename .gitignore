@@ -1,6 +1,18 @@
+# Prevent Mac os .DS_Store
+.DS_Store
+
+# Vim swap file.
+*.swp
+
+# npm package, distribute and log.
+*.log
+dist/
+node_modules/
+
+# Devil eyes secret.
 secret.json
 db.json
 watch_list.json
-*.swp
-*.log
-.DS_Store
+
+# binary file
+server
