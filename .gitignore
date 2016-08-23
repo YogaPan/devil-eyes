@@ -3,3 +3,4 @@ db.json
 watch_list.json
 *.swp
 *.log
+.DS_Store
