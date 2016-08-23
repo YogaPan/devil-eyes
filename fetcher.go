@@ -30,14 +30,14 @@ type dbSettings struct {
 
 // Your facebook friends.
 type User struct {
-	gorm.Model
+	ID         int
 	Uid        string `gorm:"type:varchar(100);unique_index"`
 	Activities []Activity
 }
 
 // Your firends activity time.
 type Activity struct {
-	gorm.Model
+	ID     int
 	UserID uint `gorm:"index"`
 	Time   int64
 }
