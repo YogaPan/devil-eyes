@@ -37,6 +37,8 @@ func main() {
 	db := getDB()
 
 	iris.Use(logger.New(iris.Logger))
+	iris.Config.IsDevelopment = true
+
 	iris.Static("/public", "./static/", 1)
 
 	iris.Get("/", func(ctx *iris.Context) {
