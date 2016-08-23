@@ -29,12 +29,14 @@ function drawLineChart(friendsData) {
   const FriendsHourFrequency = turnToHourFrequency(friendsData);
 
   const ctx = document.getElementById("myChart").getContext('2d');
+  // multi 0.98 to prevent horizontal scrollbar. 
   ctx.canvas.width = window.innerWidth * 0.98;
   ctx.canvas.height = 500;
 
-  console.log(FriendsHourFrequency);
+  // Debug data.
+  // console.log(FriendsHourFrequency);
 
-  // Initialize data.
+  // Initialize lineChartData.
   const lineChartData = {};
 
   // Add 'labels' elements to object (x axis).
@@ -70,9 +72,9 @@ function drawLineChart(friendsData) {
   const myLineChart = new Chart(ctx, {
     type: 'line',
     data: lineChartData,
-    options: {
+    options: { // These options let you can adjust canvas size.
       maintainAspectRatio: true,
-      responsive: false,
+      responsive: true,
     },
   });
 }
