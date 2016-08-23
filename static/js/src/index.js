@@ -1,21 +1,26 @@
 import Chart from 'chart.js';
 
-// This return to an 24 size array.
-// example: array[12] means facebook activity frequency
-// in 12 o'clock.
 function turnToHourFrequency(friendsData) {
   const FriendsHourFrequency = {};
+  // Get current time.
+  const now = new Date();
 
-  for (let i = 0; i < 5; i++) {
-    friendsData[i].Activities.forEach((activity) => {
-      const data = new Array(24).fill(0);
+  friendsData.forEach(friendData => {
+    // hourFrequency[12] means facebook activity frequency
+    // in 12 o'clock.
+    const hourFrequency = new Array(24).fill(0);
 
-      var d = new Date(activity.Time * 1000);
-      data[d.getHours()]++
+    friendData.Activities.forEach(activity => {
+      const activityTime = new Date(activity.Time * 1000);
 
-      FriendsHourFrequency[friendsData[i].Uid] = data;
+      // Only need today's data.
+      if (activityTime.getDate() === now.getDate()) {
+        hourFrequency[activityTime.getHours()]++
+      }
     });
-  }
+
+    FriendsHourFrequency[friendData.Uid] = hourFrequency;
+  });
 
   return FriendsHourFrequency;
 }
@@ -23,44 +28,52 @@ function turnToHourFrequency(friendsData) {
 function drawLineChart(friendsData) {
   const FriendsHourFrequency = turnToHourFrequency(friendsData);
 
-  var ctx = document.getElementById("myChart");
+  const ctx = document.getElementById("myChart").getContext('2d');
+  ctx.canvas.width = window.innerWidth * 0.98;
+  ctx.canvas.height = 500;
+
   console.log(FriendsHourFrequency);
 
-  const data = {
-    labels: [
-      "00", "01", "02", "03", "04", "05", "06", "07",
-      "08", "09", "10", "11", "12", "13", "14", "15",
-      "16", "17", "18", "19", "20", "21", "22", "23",
-    ],
-    datasets: [
-      {
-        label: "100000032606394",
-        fill: false,
-        lineTension: 0.1,
-        backgroundColor: "rgba(75,192,192,0.4)",
-        borderColor: "rgba(75,192,192,1)",
-        borderCapStyle: 'butt',
-        borderDash: [],
-        borderDashOffset: 0.0,
-        borderJoinStyle: 'miter',
-        pointBorderColor: "rgba(75,192,192,1)",
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 1,
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: "rgba(75,192,192,1)",
-        pointHoverBorderColor: "rgba(220,220,220,1)",
-        pointHoverBorderWidth: 2,
-        pointRadius: 1,
-        pointHitRadius: 10,
-        data: FriendsHourFrequency['100000032606394'],
-        spanGaps: false,
-      }
-    ]
-  };
+  // Initialize data.
+  const lineChartData = {};
 
-  var myLineChart = new Chart(ctx, {
+  // Add 'labels' elements to object (x axis).
+  // This means 24 hour.
+  lineChartData.labels = [
+    "00", "01", "02", "03", "04", "05", "06", "07",
+    "08", "09", "10", "11", "12", "13", "14", "15",
+    "16", "17", "18", "19", "20", "21", "22", "23",
+  ];
+  lineChartData.datasets = [];
+
+  // Only show 5 friends in chart.
+  let count = 0;
+  for (var uid in FriendsHourFrequency) {
+    lineChartData.datasets.push({});
+
+    const dataset = lineChartData.datasets[count];
+
+    dataset.data = FriendsHourFrequency[uid];
+    dataset.label = uid;
+    dataset.fill = false;
+    dataset.tension = 0.2;
+    dataset.backgroundColor = "rgba(75,192,192,0.4)";
+    dataset.borderColor = "rgba(75,192,192,1)";
+
+    count++;
+    // Only show 5 friends in chart.
+    if (count >= 5) {
+      break;
+    }
+  }
+
+  const myLineChart = new Chart(ctx, {
     type: 'line',
-    data: data,
+    data: lineChartData,
+    options: {
+      maintainAspectRatio: true,
+      responsive: false,
+    },
   });
 }
 
@@ -70,7 +83,7 @@ function drawLineChart(friendsData) {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == XMLHttpRequest.DONE) {
       if (xmlhttp.status == 200) {
-        // Turn facebook activity data to JSON and draw line chart.
+        // Turn facebook activity data into JSON and draw line chart.
         drawLineChart(JSON.parse(xmlhttp.responseText));
       }
       else if (xmlhttp.status == 400) {
