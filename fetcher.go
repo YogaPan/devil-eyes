@@ -121,9 +121,11 @@ func (f *Fetcher) init() {
 
 // Read settings from ./db.json file add Connect to MySQL databases.
 func (f *Fetcher) initDB() {
-	var err error
-	var byt []byte
-	var dbSettings dbSettings
+	var (
+		err        error
+		byt        []byte
+		dbSettings dbSettings
+	)
 
 	byt, err = ioutil.ReadFile("./db.json")
 	if err != nil {
@@ -207,8 +209,10 @@ func (f *Fetcher) logUpdate(event map[string]interface{}) {
 
 // Save user and activity time to MySQL.
 func (f *Fetcher) saveActivity(uid string, t int64) {
-	var user User
-	var activity Activity
+	var (
+		user     User
+		activity Activity
+	)
 
 	f.db.Where("uid = ?", uid).First(&user)
 	if user.ID == 0 {
