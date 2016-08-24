@@ -49,10 +49,17 @@ func main() {
 		ctx.Render("app.html", struct{}{})
 	})
 
+	// If no facebook uid specified, SELECT all data.
 	iris.Get("/data", func(ctx *iris.Context) {
 		var users []User
 
 		db.Preload("Activities").Find(&users)
+		ctx.JSON(iris.StatusOK, users)
+	})
+	iris.Get("/data/:uid", func(ctx *iris.Context) {
+		var users []User
+
+		db.Preload("Activities").Where("uid = ?", ctx.Param("uid")).First(&users)
 		ctx.JSON(iris.StatusOK, users)
 	})
 

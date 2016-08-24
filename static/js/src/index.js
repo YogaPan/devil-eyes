@@ -1,5 +1,28 @@
 import Chart from 'chart.js';
 
+/*
+ * Get params from url.
+ *
+ * From stackoverflow:
+ * http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+ *
+ * usage:
+ * query string: ?foo=lorem&bar=&baz
+ * var foo = getParameterByName('foo'); => "lorem"
+ * var bar = getParameterByName('bar'); => "" (present with empty value)
+ * var baz = getParameterByName('baz'); => "" (present with no value)
+ * var qux = getParameterByName('qux'); => null (absent)
+ */
+function getParameterByName(name, url) {
+  if (!url) url = window.location.href;
+  name = name.replace(/[\[\]]/g, "\\$&");
+  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+  results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 function turnToHourFrequency(friendsData) {
   const FriendsHourFrequency = {};
   // Get current time.
@@ -97,6 +120,10 @@ function drawLineChart(friendsData) {
   };
 
   // "/data" provide facebook activity data.
-  xmlhttp.open("GET", "/data", true);
+  if (getParameterByName('uid') !== null) {
+    xmlhttp.open("GET", `/data/${getParameterByName('uid')}`, true);
+  } else {
+    xmlhttp.open("GET", '/data', true);
+  }
   xmlhttp.send();
 })();
