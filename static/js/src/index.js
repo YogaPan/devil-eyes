@@ -29,8 +29,9 @@ function turnToHourFrequency(friendsData) {
   const now = new Date();
 
   friendsData.forEach(friendData => {
-    // hourFrequency[12] means facebook activity frequency
-    // in 12 o'clock.
+    // example:
+    // hourFrequency[12] = 3
+    // means this guy active 3 times at 12 o'clock.
     const hourFrequency = new Array(24).fill(0);
 
     friendData.Activities.forEach(activity => {
@@ -119,7 +120,8 @@ function drawLineChart(friendsData) {
     }
   };
 
-  // "/data" provide facebook activity data.
+  // Path "/data" provide all friends facebook activity data.
+  // Path "/data/1003123" only provide facebook id 1003123's data.
   if (getParameterByName('uid') !== null) {
     xmlhttp.open("GET", `/data/${getParameterByName('uid')}`, true);
   } else {
