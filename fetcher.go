@@ -88,10 +88,14 @@ func (f *Fetcher) setParams(req *http.Request) {
 }
 
 // Make request and return json format map.
-func (f *Fetcher) makeRequest() map[string]interface{} {
+// If failed, this function will return error.
+func (f *Fetcher) makeRequest() (map[string]interface{}, error) {
 	// This url return some interesting data.
 	url := "https://3-edge-chat.facebook.com/pull"
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	f.setHeaders(req)
 	f.setParams(req)
@@ -99,7 +103,10 @@ func (f *Fetcher) makeRequest() map[string]interface{} {
 	// Show request string with query.
 	// fmt.Println(req.URL.String())
 
-	res, _ := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer res.Body.Close()
 
 	// Print response status code.
@@ -110,7 +117,7 @@ func (f *Fetcher) makeRequest() map[string]interface{} {
 	// body[9:] delete "for(;;); " prefix to
 	// make this string totally turn into a JSON, NOT javascript code.
 	bodyJson := byteToJson(body[9:])
-	return bodyJson
+	return bodyJson, nil
 }
 
 // Intialize fetcher facebook and database settings.
@@ -244,7 +251,12 @@ func (f *Fetcher) Start() {
 	f.init()
 
 	for {
-		dat := f.makeRequest()
+		dat, err := f.makeRequest()
+		if err != nil {
+			fmt.Println(err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
 		// Update out seq number.
 		if seq, ok := dat["seq"]; ok {
