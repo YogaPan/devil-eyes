@@ -34,14 +34,16 @@ function turnToHourFrequency(friendsData) {
     // means this guy active 3 times at 12 o'clock.
     const hourFrequency = new Array(24).fill(0);
 
-    friendData.Activities.forEach(activity => {
-      const activityTime = new Date(activity.Time * 1000);
+    if (friendData.Activities !== null) {
+      friendData.Activities.forEach(activity => {
+        const activityTime = new Date(activity.Time * 1000);
 
-      // Only need today's data.
-      if (activityTime.getDate() === now.getDate()) {
-        hourFrequency[activityTime.getHours()]++
-      }
-    });
+        // Only need today's data.
+        if (activityTime.getDate() === now.getDate()) {
+          hourFrequency[activityTime.getHours()]++;
+        }
+      });
+    }
 
     FriendsHourFrequency[friendData.Uid] = hourFrequency;
   });

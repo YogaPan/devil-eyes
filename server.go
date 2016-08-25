@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/iris-contrib/middleware/logger"
 	"github.com/jinzhu/gorm"
@@ -53,13 +54,19 @@ func main() {
 	iris.Get("/data", func(ctx *iris.Context) {
 		var users []User
 
-		db.Preload("Activities").Find(&users)
+		db.Preload("Activities", "time >= ?", getYesterdayTime().Unix()).
+			Limit(5).
+			Find(&users)
+
 		ctx.JSON(iris.StatusOK, users)
 	})
 	iris.Get("/data/:uid", func(ctx *iris.Context) {
 		var users []User
 
-		db.Preload("Activities").Where("uid = ?", ctx.Param("uid")).First(&users)
+		db.Preload("Activities", "time >= ?", getYesterdayTime().Unix()).
+			Where("uid = ?", ctx.Param("uid")).
+			First(&users)
+
 		ctx.JSON(iris.StatusOK, users)
 	})
 
@@ -88,5 +95,13 @@ func getDB() *gorm.DB {
 	if err != nil {
 		panic("failed to connect database")
 	}
+
 	return db
+}
+
+func getYesterdayTime() time.Time {
+	now := time.Now()
+	yesterday := now.Add(time.Duration(-now.Hour())*time.Hour).AddDate(0, 0, -1)
+
+	return yesterday
 }
