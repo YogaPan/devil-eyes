@@ -32,15 +32,19 @@ function turnToHourFrequency(friendsData) {
     // example:
     // hourFrequency[12] = 3
     // means this guy active 3 times at 12 o'clock.
-    const hourFrequency = new Array(24).fill(0);
+    const hourFrequency = new Array(48).fill(0);
 
     if (friendData.Activities !== null) {
       friendData.Activities.forEach(activity => {
         const activityTime = new Date(activity.Time * 1000);
 
-        // Only need today's data.
-        if (activityTime.getDate() === now.getDate()) {
+        // Yesterday's data.
+        if (activityTime.getDate() === now.getDate() - 1) {
           hourFrequency[activityTime.getHours()]++;
+        }
+        // Today's data.
+        if (activityTime.getDate() === now.getDate()) {
+          hourFrequency[activityTime.getHours() + 24]++;
         }
       });
     }
@@ -68,9 +72,12 @@ function drawLineChart(friendsData) {
   // Add 'labels' elements to object (x axis).
   // This means 24 hour.
   lineChartData.labels = [
-    "00", "01", "02", "03", "04", "05", "06", "07",
-    "08", "09", "10", "11", "12", "13", "14", "15",
-    "16", "17", "18", "19", "20", "21", "22", "23",
+    "Yesterday 00", "", "", "Yesterday 03", "", "", "Yesterday 06", "",
+    "", "Yesterday 09", "", "", "Yesterday 12", "", "", "Yesterday 15",
+    "", "", "Yesterday 18", "", "", "Yesterday 21", "", "",
+    "Today 00", "", "", "Today 03", "", "", "Today 06", "",
+    "", "Today 09", "", "", "Today 12", "", "", "Today 15",
+    "", "", "Today18", "", "", "Today 21", "", "",
   ];
   lineChartData.datasets = [];
 
