@@ -105,3 +105,18 @@ func getYesterdayTime() time.Time {
 
 	return yesterday
 }
+
+func getWatchList() map[string]string {
+	var watchList map[string]string
+
+	byt, err := ioutil.ReadFile("watch_list.json")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := json.Unmarshal(byt, &watchList); err != nil {
+		panic(err)
+	}
+
+	return watchList
+}
