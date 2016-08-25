@@ -53,7 +53,7 @@ function drawLineChart(friendsData) {
   const FriendsHourFrequency = turnToHourFrequency(friendsData);
 
   const ctx = document.getElementById("myChart").getContext('2d');
-  // multi 0.98 to prevent horizontal scrollbar. 
+  // multi 0.98 to prevent horizontal scrollbar.
   ctx.canvas.width = window.innerWidth * 0.98;
   ctx.canvas.height = 500;
 
@@ -113,9 +113,9 @@ function drawLineChart(friendsData) {
         drawLineChart(JSON.parse(xmlhttp.responseText));
       }
       else if (xmlhttp.status == 400) {
-        alert('There was an error 400');
+        console.log('There was an error 400');
       } else {
-        alert('something else other than 200 was returned');
+        console.log('something else other than 200 was returned');
       }
     }
   };
