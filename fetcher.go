@@ -268,7 +268,7 @@ func (f *Fetcher) Start() {
 		time.Sleep(5 * time.Second)
 	}
 
-	f.db.Close()
+	defer f.db.Close()
 }
 
 func main() {
