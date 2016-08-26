@@ -1,4 +1,8 @@
 const webpack = require('webpack');
+const Dashboard = require('webpack-dashboard');
+const DashboardPlugin = require('webpack-dashboard/plugin');
+
+const dashboard = new Dashboard();
 
 module.exports = {
   entry: './static/js/src/index.js',
@@ -21,4 +25,7 @@ module.exports = {
   resolve: {
     extensions: ['', '.js', '.json'],
   },
+  plugins: [
+    new DashboardPlugin(dashboard.setData),
+  ],
 };
