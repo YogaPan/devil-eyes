@@ -16,3 +16,6 @@ watch_list.json
 
 # binary file
 server
+
+# vs code files
+.browse.VC.db*
