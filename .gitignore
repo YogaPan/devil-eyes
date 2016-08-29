@@ -18,4 +18,4 @@ watch_list.json
 server
 
 # vs code files
-.browse.VC.db*
+.vscode/
