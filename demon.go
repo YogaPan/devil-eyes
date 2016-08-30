@@ -60,6 +60,7 @@ func getDB() *gorm.DB {
 
 func main() {
 	db := getDB()
+	defer db.Close()
 
 	for {
 		var uid int
@@ -77,6 +78,4 @@ func main() {
 			fmt.Println("online: ", tm)
 		}
 	}
-
-	db.Close()
 }
