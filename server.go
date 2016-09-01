@@ -93,7 +93,7 @@ func getDB() *gorm.DB {
 
 	db, err := gorm.Open("mysql", connectString)
 	if err != nil {
-		panic("failed to connect database")
+		panic(err)
 	}
 
 	return db
